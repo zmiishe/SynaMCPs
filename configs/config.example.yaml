@@ -1,0 +1,113 @@
+server:
+  listen_addr: ":8080"
+
+transport:
+  streamable_http: true
+  legacy_sse: true
+
+web:
+  enable_ui: true
+  default_admin:
+    enabled: true
+    username: "admin"
+    password_env_ref: "env:SYNA_ADMIN_PASSWORD"
+    session_ttl_hours: 12
+
+oauth:
+  providers:
+    - name: keycloak
+      issuer: "https://keycloak.local/realms/syna"
+      audience: "syna-mcp"
+      jwks_url: "https://keycloak.local/realms/syna/protocol/openid-connect/certs"
+    - name: google
+      issuer: "https://accounts.google.com"
+      audience: "syna-mcp"
+      jwks_url: "https://www.googleapis.com/oauth2/v3/certs"
+  google_allowed_domains:
+    - "example.com"
+
+teleport:
+  enabled: true
+  issuer: "https://teleport.local"
+  audience: "syna-mcp"
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+  key_prefix: "syna"
+  ttl_hours: 24
+
+s3:
+  endpoint: "http://minio:9000"
+  bucket: "knowledge"
+  large_document_threshold_bytes: 65536
+  access_key_env_ref: "env:S3_ACCESS_KEY"
+  secret_key_env_ref: "env:S3_SECRET_KEY"
+  use_ssl: false
+
+embedding:
+  provider: "openai-compatible"
+  model: "text-embedding-3-small"
+  api: "https://api.example.com/v1/embeddings"
+  api_key_env_ref: "env:EMBEDDING_API_KEY"
+  max_input_tokens: 8192
+  max_output_tokens: 0
+
+summarization:
+  provider: "openai-compatible"
+  model: "gpt-4.1-mini"
+  api: "https://api.example.com/v1/chat/completions"
+  api_key_env_ref: "env:SUMMARIZATION_API_KEY"
+  max_input_tokens: 8192
+  max_output_tokens: 512
+
+vector_backend:
+  active: "pgvector"
+  qdrant_url: "http://qdrant:6333"
+  qdrant_collection: "knowledge"
+
+metadata_catalog:
+  driver: "postgres"
+  dsn: "postgres://postgres:postgres@postgres:5432/syna?sslmode=disable"
+
+chunking:
+  chunk_size: 400
+  overlap: 50
+
+limits:
+  max_upload_bytes: 4194304
+
+api:
+  scopes:
+    - knowledge.read
+    - knowledge.write
+    - knowledge.search
+    - knowledge.delete
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  trusted_proxy_cidrs:
+    - "127.0.0.1/32"
+
+search:
+  filters:
+    source_url:
+      allow_partial_match: true
+
+usage:
+  enabled: true
+  redis_timeseries: true
+  retention_hours: 720
+  default_rate_limit:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    requests_per_day: 10000
+    burst: 20
+  exporters:
+    prometheus:
+      enabled: true
+    victoriametrics:
+      enabled: false
+      remote_write_url: ""
+      interval_seconds: 30
